@@ -51,6 +51,18 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     }
   }
 
+  stopIframeListener () {
+    if (typeof this.listener === 'function') {
+      if (window.addEventListener) {
+        window.removeEventListener('message', this.listener);
+      }
+      if (window.attachEvent) {
+        window.detachEvent('onmessage', this.listener);
+      }
+    }
+    this.listener = null;
+  }
+
   iframeListener (event) {
     if (!event?.data?.type) {
       return;
@@ -204,16 +216,25 @@ export default class VideoEngagerWidget extends window.HTMLElement {
         window.location.href = redirectUrl;
         break;
       case invalidOrExpiredBehavoirs['show-text-element']:
+        this.destroyIframe();
         this.innerHTML = text;
-        this.iframe = null;
         break;
       case invalidOrExpiredBehavoirs.hide:
+        this.destroyIframe();
         this.innerHTML = '';
-        this.iframe = null;
+
         break;
       default:
         break;
     }
+  }
+
+  destroyIframe () {
+    if (this.iframe && this.contains(this.iframe)) {
+      this.removeChild(this.iframe);
+    }
+    this.stopIframeListener();
+    this.iframe = null;
   }
 
   handleEndOfCall () {
@@ -235,20 +256,28 @@ export default class VideoEngagerWidget extends window.HTMLElement {
       currentBehavior = endOfCallsBehavoirs.hide;
     }
     const text = this.getAttribute('ve-on-end-text-element') || 'This Video Call is ended';
+
     switch (currentBehavior) {
       case endOfCallsBehavoirs.redirect:
+        this.destroyIframe();
+        if (window.location.replace) {
+          window.location.replace(redirectUrl);
+        } else {
+          window.location.href = redirectUrl;
+        }
         break;
       case endOfCallsBehavoirs['show-text-element']:
+        this.destroyIframe();
         this.innerHTML = text;
-        this.iframe = null;
         break;
       case endOfCallsBehavoirs.hide:
+        this.destroyIframe();
         this.innerHTML = '';
-        this.iframe = null;
         break;
       case endOfCallsBehavoirs['do-nothing']:
         break;
       default:
+        console.error('Invalid end of call behavior');
         break;
     }
   }

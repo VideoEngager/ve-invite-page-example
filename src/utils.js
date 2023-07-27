@@ -65,7 +65,7 @@ export async function getIframeUrlFromShortCodeOrPin ({ code, pin }, tenantID, s
       tenantID,
       code
     }).catch((error) => {
-      console.log(error);
+      console.error(error);
       data.error = true;
     });
     if (response?.data?.active) {
@@ -78,7 +78,7 @@ export async function getIframeUrlFromShortCodeOrPin ({ code, pin }, tenantID, s
       tenantID,
       pin
     }).catch((error) => {
-      console.log(error);
+      console.error(error);
       data.error = true;
     });
     if (response?.data?.shortUrl) {
