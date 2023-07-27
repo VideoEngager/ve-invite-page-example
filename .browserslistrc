@@ -1,0 +1,6 @@
+# .browserslistrc
+last 2 versions
+> 1%
+IE 11
+iOS >= 9
+Android >= 4.4
