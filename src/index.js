@@ -68,6 +68,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
       return;
     }
     const type = event.data.type;
+    console.log('iframeListener', type, event.data);
     if (type === 'popupClosed' && this.iframe) {
       try {
         if (typeof this.onVideoCallFinished === 'function') {
@@ -238,6 +239,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
   }
 
   handleEndOfCall () {
+    console.log('handleEndOfCall');
     const behaviourFromAttr = this.getAttribute('ve-on-end-behavior') || '';
     let currentBehavior = endOfCallsBehavoirs.redirect;
     if (endOfCallsBehavoirs[behaviourFromAttr]) {
@@ -260,11 +262,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     switch (currentBehavior) {
       case endOfCallsBehavoirs.redirect:
         this.destroyIframe();
-        if (window.location.replace) {
-          window.location.replace(redirectUrl);
-        } else {
-          window.location.href = redirectUrl;
-        }
+        window.location.href = redirectUrl;
         break;
       case endOfCallsBehavoirs['show-text-element']:
         this.destroyIframe();
