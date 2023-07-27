@@ -31,19 +31,28 @@ export default class VideoEngagerWidget extends window.HTMLElement {
          * @type {((Awaited<ReturnType<typeof settingsPublic.getPublicSettingsByTennantId>>)['data'])||null}
          */
     this.tenantData = null;
-    const that = this;
-    window.addEventListener('message', (event) => {
-      if (event.data === 'popupClosed' && that.iframe) {
-        try {
-          if (typeof that.onVideoCallFinished === 'function') {
-            that.onVideoCallFinished();
-          }
-        } catch (error) {
-          console.error(error);
+    this.listener = null;
+  }
+
+  startIframeListener () {
+    if (this.listener) {
+      window.removeEventListener('message', this.listener);
+    }
+    this.listener = this.iframeListener.bind(this);
+    window.addEventListener('message', this.listener);
+  }
+
+  iframeListener (event) {
+    if (event.data === 'popupClosed' && this.iframe) {
+      try {
+        if (typeof this.onVideoCallFinished === 'function') {
+          this.onVideoCallFinished();
         }
-        that.handleEndOfCall();
+      } catch (error) {
+        console.error(error);
       }
-    });
+      this.handleEndOfCall();
+    }
   }
 
   async getTennentData () {
@@ -139,7 +148,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
       if (that.style.length === 0) {
         iframe.style.opacity = '1';
       }
-
+      that.startIframeListener();
       if (typeof that.onVideoPageLoaded === 'function') {
         that.onVideoPageLoaded();
       }
