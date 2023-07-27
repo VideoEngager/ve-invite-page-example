@@ -35,15 +35,28 @@ export default class VideoEngagerWidget extends window.HTMLElement {
   }
 
   startIframeListener () {
-    if (this.listener) {
-      window.removeEventListener('message', this.listener);
+    if (typeof this.listener === 'function') {
+      if (window.addEventListener) {
+        window.removeEventListener('message', this.listener);
+      }
+      if (window.attachEvent) {
+        window.detachEvent('onmessage', this.listener);
+      }
     }
     this.listener = this.iframeListener.bind(this);
-    window.addEventListener('message', this.listener);
+    if (window.addEventListener) {
+      window.addEventListener('message', this.listener, false);
+    } else {
+      window.attachEvent('onmessage', this.listener);
+    }
   }
 
   iframeListener (event) {
-    if (event.data === 'popupClosed' && this.iframe) {
+    if (!event?.data?.type) {
+      return;
+    }
+    const type = event.data.type;
+    if (type === 'popupClosed' && this.iframe) {
       try {
         if (typeof this.onVideoCallFinished === 'function') {
           this.onVideoCallFinished();
@@ -53,6 +66,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
       }
       this.handleEndOfCall();
     }
+    // if (type === 'callEnded')
   }
 
   async getTennentData () {
