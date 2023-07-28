@@ -22,7 +22,13 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     this.tenantData = null;
     this.listener = null;
     this.serverUrl = null;
-    this.attachShadow({ mode: 'closed' });
+  }
+
+  get shadow () {
+    if (!this._shadow) {
+      this._shadow = this.attachShadow({ mode: 'closed' });
+    }
+    return this._shadow;
   }
 
   startIframeListener () {
@@ -119,7 +125,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     }
     initializeSmartVideoClient({ basePath: serverUrl });
     this.serverUrl = serverUrl;
-    this.shadowRoot.innerHTML = `<div style="text-align: center; margin-top: 20px;">${this.getAttribute('ve-loading-text-element') || 'Loading...'}</div>`;
+    this.shadow.innerHTML = `<div style="text-align: center; margin-top: 20px;">${this.getAttribute('ve-loading-text-element') || 'Loading...'}</div>`;
 
     if (!this.tenantData) {
       await this.getTennentData();
@@ -129,7 +135,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     if (typeof modes[mode] === 'function') {
       modes[mode](this);
     } else {
-      this.shadowRoot.innerHTML = '<div style="text-align: center; margin-top: 20px;">Invalid detection mode. Please use one of the following: ' + Object.keys(modes).join(', ') + '</div>';
+      this.shadow.innerHTML = '<div style="text-align: center; margin-top: 20px;">Invalid detection mode. Please use one of the following: ' + Object.keys(modes).join(', ') + '</div>';
       console.error('Invalid detection mode. Please use one of the following: ', Object.keys(modes).join(', '));
     }
     return true;
@@ -144,7 +150,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     if (this.iframe && this.contains(this.iframe)) {
       this.removeChild(this.iframe);
     }
-    this.shadowRoot.innerHTML = '';
+    this.shadow.innerHTML = '';
     const iframe = document.createElement('iframe');
     if (this.style.length > 0) {
       iframe.style = this.style;
@@ -179,7 +185,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     };
 
     this.iframe = iframe;
-    this.shadowRoot.appendChild(this.iframe);
+    this.shadow.appendChild(this.iframe);
   }
 
   handleInvalidShortCodeOrPin (invalidUrl) {
@@ -210,11 +216,11 @@ export default class VideoEngagerWidget extends window.HTMLElement {
         break;
       case invalidOrExpiredBehavoirs['show-text-element']:
         this.destroyIframe();
-        this.shadowRoot.innerHTML = text;
+        this.shadow.innerHTML = text;
         break;
       case invalidOrExpiredBehavoirs.hide:
         this.destroyIframe();
-        this.shadowRoot.innerHTML = '';
+        this.shadow.innerHTML = '';
 
         break;
       default:
@@ -258,11 +264,11 @@ export default class VideoEngagerWidget extends window.HTMLElement {
         break;
       case endOfCallsBehavoirs['show-text-element']:
         this.destroyIframe();
-        this.shadowRoot.innerHTML = text;
+        this.shadow.innerHTML = text;
         break;
       case endOfCallsBehavoirs.hide:
         this.destroyIframe();
-        this.shadowRoot.innerHTML = '';
+        this.shadow.innerHTML = '';
         break;
       case endOfCallsBehavoirs['do-nothing']:
         break;
