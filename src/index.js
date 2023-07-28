@@ -1,23 +1,12 @@
 // import 'core-js/stable';
 // import 'regenerator-runtime/runtime';
 import { initializeSmartVideoClient, settingsPublic, smartVideoInstance } from 'videoengager-js-sdk';
-import { checkIfUrlIsCorrect, endOfCallsBehavoirs, getURLHref, invalidOrExpiredBehavoirs, modes } from './utils';
+import { attributesDescritions, checkServerUrl, endOfCallsBehavoirs, getURLHref, invalidOrExpiredBehavoirs } from './utils';
+import { modes } from './modes';
 
 export default class VideoEngagerWidget extends window.HTMLElement {
   static get attributesDescription () {
-    return {
-      've-server-url': 'The URL of the VideoEngager server (Required)',
-      've-tenant': 'The tenant ID (Required)',
-      've-widget-mode': 'The detection mode of videoCall, default (short-url) available options:' + Object.keys(modes).join(', '),
-      've-auto-start': 'Disable auto start, to start manually use method of element: element.startVideoEngagerCall()',
-      've-on-invalid-behavior': 'The behavior when the URL is invalid, default (redirect) available options:' + Object.keys(invalidOrExpiredBehavoirs).join(', '),
-      've-on-end-behavior': 'The behavior when the call is ended, default (redirect) available options:' + Object.keys(endOfCallsBehavoirs).join(', '),
-      've-on-invalid-text-element': 'The text to show when the URL is invalid or expired (only when ve-on-invalid-behavior="show-text-element")',
-      've-on-end-text-element': 'The text to show when the call is ended (only when ve-on-end-behavior="show-text-element")',
-      've-on-invalid-redirect-url': 'The URL to redirect to when the URL is invalid or expired (only when ve-on-invalid-behavior="redirect")',
-      've-on-end-redirect-url': 'The URL to redirect to when the call is ended (only when ve-on-end-behavior="redirect")',
-      've-loading-text-element': 'The text to show when the data is being loaded from the server (default: Loading...)'
-    };
+    return attributesDescritions;
   }
 
   constructor () {
@@ -32,6 +21,8 @@ export default class VideoEngagerWidget extends window.HTMLElement {
          */
     this.tenantData = null;
     this.listener = null;
+    this.serverUrl = null;
+    this.attachShadow({ mode: 'closed' });
   }
 
   startIframeListener () {
@@ -120,15 +111,15 @@ export default class VideoEngagerWidget extends window.HTMLElement {
       console.error('VideoEngager is already running');
       return false;
     }
-    const serverUrl = checkIfUrlIsCorrect(this.getAttribute('ve-server-url'));
+    const serverUrl = checkServerUrl(this.getAttribute('ve-server-url'));
 
     if (!serverUrl) {
       console.error('Invalid server url');
       return false;
     }
     initializeSmartVideoClient({ basePath: serverUrl });
-
-    this.innerHTML = `<div style="text-align: center; margin-top: 20px;">${this.getAttribute('ve-loading-text-element') || 'Loading...'}</div>`;
+    this.serverUrl = serverUrl;
+    this.shadowRoot.innerHTML = `<div style="text-align: center; margin-top: 20px;">${this.getAttribute('ve-loading-text-element') || 'Loading...'}</div>`;
 
     if (!this.tenantData) {
       await this.getTennentData();
@@ -138,9 +129,10 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     if (typeof modes[mode] === 'function') {
       modes[mode](this);
     } else {
-      this.innerHTML = '<div style="text-align: center; margin-top: 20px;">Invalid detection mode. Please use one of the following: ' + Object.keys(modes).join(', ') + '</div>';
+      this.shadowRoot.innerHTML = '<div style="text-align: center; margin-top: 20px;">Invalid detection mode. Please use one of the following: ' + Object.keys(modes).join(', ') + '</div>';
       console.error('Invalid detection mode. Please use one of the following: ', Object.keys(modes).join(', '));
     }
+    return true;
   }
 
   createIframe (src) {
@@ -152,7 +144,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     if (this.iframe && this.contains(this.iframe)) {
       this.removeChild(this.iframe);
     }
-    this.innerHTML = '';
+    this.shadowRoot.innerHTML = '';
     const iframe = document.createElement('iframe');
     if (this.style.length > 0) {
       iframe.style = this.style;
@@ -187,7 +179,7 @@ export default class VideoEngagerWidget extends window.HTMLElement {
     };
 
     this.iframe = iframe;
-    this.appendChild(this.iframe);
+    this.shadowRoot.appendChild(this.iframe);
   }
 
   handleInvalidShortCodeOrPin (invalidUrl) {
@@ -218,11 +210,11 @@ export default class VideoEngagerWidget extends window.HTMLElement {
         break;
       case invalidOrExpiredBehavoirs['show-text-element']:
         this.destroyIframe();
-        this.innerHTML = text;
+        this.shadowRoot.innerHTML = text;
         break;
       case invalidOrExpiredBehavoirs.hide:
         this.destroyIframe();
-        this.innerHTML = '';
+        this.shadowRoot.innerHTML = '';
 
         break;
       default:
@@ -266,11 +258,11 @@ export default class VideoEngagerWidget extends window.HTMLElement {
         break;
       case endOfCallsBehavoirs['show-text-element']:
         this.destroyIframe();
-        this.innerHTML = text;
+        this.shadowRoot.innerHTML = text;
         break;
       case endOfCallsBehavoirs.hide:
         this.destroyIframe();
-        this.innerHTML = '';
+        this.shadowRoot.innerHTML = '';
         break;
       case endOfCallsBehavoirs['do-nothing']:
         break;
